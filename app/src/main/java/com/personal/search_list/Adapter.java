@@ -1,19 +1,23 @@
 package com.personal.search_list;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+import retrofit2.Callback;
+
 public class Adapter extends RecyclerView.Adapter<Adapter.MyViewHolder> {
 
-    private List<DutyName> dutyNames;
+    private final List<DutyName> dutyNames;
     private Context context;
 
     public Adapter(List<DutyName> dutyNames, Context context) {
@@ -21,9 +25,22 @@ public class Adapter extends RecyclerView.Adapter<Adapter.MyViewHolder> {
         this.context = context;
     }
 
+    // InterFace
+    public interface OnItemClickListener {
+        void onItemClick(View v, int pos);
+    }
+
+    private OnItemClickListener mListener = null;
+
+    public void setOnItemClickListener(OnItemClickListener listener){
+        this.mListener = listener;
+    }
+
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.single_item, parent, false);
+        context = parent.getContext();
+
+        View view = LayoutInflater.from(context).inflate(R.layout.single_item, parent, false);
         return new MyViewHolder(view);
     }
 
@@ -38,7 +55,8 @@ public class Adapter extends RecyclerView.Adapter<Adapter.MyViewHolder> {
         return dutyNames.size();
     }
 
-    public static class MyViewHolder extends RecyclerView.ViewHolder{
+
+    public class MyViewHolder extends RecyclerView.ViewHolder{
 
         TextView tv_dutyName;
         CardView cv_dutyName;
@@ -47,6 +65,21 @@ public class Adapter extends RecyclerView.Adapter<Adapter.MyViewHolder> {
             super(itemView);
             tv_dutyName = itemView.findViewById(R.id.tv_dutyName);
             cv_dutyName = itemView.findViewById(R.id.cv_dutyName);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //인터페이스 클릭리스너
+                    int currentPos = getAbsoluteAdapterPosition();
+                    if(currentPos != RecyclerView.NO_POSITION) {
+                        if (mListener != null) {
+                            dutyNames.set(currentPos, dutyNames.get(currentPos));
+                            notifyItemChanged(currentPos);
+                            mListener.onItemClick(v, currentPos);
+                        }
+                    }
+                }
+            });
 
         }
     }
