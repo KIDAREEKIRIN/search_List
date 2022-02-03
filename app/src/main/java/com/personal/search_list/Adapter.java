@@ -85,7 +85,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.MyViewHolder> {
 //                    int currentPos = getAbsoluteAdapterPosition();
 //                    if(currentPos != RecyclerView.NO_POSITION) {
 //                        if (mListener != null) {
-//                            dutyNames.set(currentPos, dutyNames.get(currentPos));
+//                            dutyNames.sret(currentPos, dutyNames.get(currentPos));
 //                            notifyItemChanged(currentPos);
 //                            mListener.onItemClick(v, currentPos);
 //                        }
