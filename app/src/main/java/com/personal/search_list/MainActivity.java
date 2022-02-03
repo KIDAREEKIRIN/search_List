@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private RecyclerView.LayoutManager layoutManager;
-    private List<DutyName> dutyNames;
+    private ArrayList<DutyName> dutyNames = new ArrayList<>();
     private Adapter adapter;
     private ApiInterface apiInterface;
     TextView tv_result;
@@ -36,7 +37,12 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView rv_selectedDuty;
     private RecyclerView.LayoutManager selectedLayoutManager;
     private SelectAdapter selectAdapter;
-    private List<String> selectedDutyNames;
+//    private List<String> selectedDutyNames;
+    private ArrayList<DutyName> selectedDutyNames;
+
+    // 선택항목 stringBuilder
+    StringBuilder stringBuilder;
+    Button btn_selectedDuty;
 
     private static String TAG = "여기";
 
@@ -51,10 +57,13 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setHasFixedSize(true);
         fetchContact( "");
+        // 버튼
+        btn_selectedDuty = findViewById(R.id.btn_selectDuty);
 
         // 선택된 업무항목
         rv_selectedDuty = findViewById(R.id.rv_selectedDuty);
-        selectedLayoutManager = new LinearLayoutManager(MainActivity.this,LinearLayoutManager.HORIZONTAL,false);
+        selectedLayoutManager = new LinearLayoutManager(MainActivity.this,
+                LinearLayoutManager.HORIZONTAL,false);
         rv_selectedDuty.setLayoutManager(selectedLayoutManager);
         rv_selectedDuty.setHasFixedSize(true);
 
@@ -68,46 +77,82 @@ public class MainActivity extends AppCompatActivity {
 
         apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
 
-        Call<List<DutyName>> call = apiInterface.getContact(key);
-        call.enqueue(new Callback<List<DutyName>>() {
+        Call<ArrayList<DutyName>> call = apiInterface.getContact(key);
+        call.enqueue(new Callback<ArrayList<DutyName>>() {
             @Override
-            public void onResponse(Call<List<DutyName>> call, Response<List<DutyName>> response) {
+            public void onResponse(Call<ArrayList<DutyName>> call, Response<ArrayList<DutyName>> response) {
                 dutyNames = response.body();
                 adapter = new Adapter(dutyNames, MainActivity.this);
                 recyclerView.setAdapter(adapter);
+
+                //데이터 리스트.
+//                CreateListOfData();
+
+                // handling Click Event on the Button
+
+                btn_selectedDuty.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (adapter.getSelected().size() > 0 ){
+                            //Getting a list of item selected
+                            StringBuilder stringBuilder = new StringBuilder();
+
+                            for (int i = 0; i < adapter.getSelected().size(); i++){
+                                stringBuilder.append(adapter.getSelected().get(i).getDuty_name());
+                                stringBuilder.append("\n");
+                            }
+                            Toast.makeText(getApplicationContext(), stringBuilder.toString().trim(), Toast.LENGTH_SHORT).show();
+                            Log.d(TAG, "onClick: " + stringBuilder.toString().trim());
+
+                        } else {
+                            Toast.makeText(getApplicationContext(), "No Selection", Toast.LENGTH_SHORT).show();
+                        }
+//                         선택항목에 대한 Adapter
+                        selectAdapter = new SelectAdapter(adapter.getSelected(),MainActivity.this);
+                        Log.d(TAG, "onClick: selectAdapter에 붙은" + adapter.getSelected());
+                        rv_selectedDuty.setAdapter(selectAdapter);
+                        selectAdapter.notifyDataSetChanged();
+                    }
+
+                });
+
                 // 클릭 리스너.
                 adapter.setOnItemClickListener(new Adapter.OnItemClickListener() {
                     @Override
                     public void onItemClick(View v, int pos) {
                         Toast.makeText(getApplicationContext(), "클릭"+dutyNames.get(pos).getDuty_name(), Toast.LENGTH_SHORT).show();
 
+                        // 클릭 시, 해당 Item Position;
                         Log.d(TAG, dutyNames.get(pos).getDuty_name());
-                        tv_result.setText(dutyNames.get(pos).getDuty_name());
-
-                        selectedDutyNames = new ArrayList<>();
-                        selectedDutyNames.add(dutyNames.get(pos).getDuty_name());
-                        Log.d(TAG, String.valueOf(selectedDutyNames));
-//                        tv_result.setText(selectedDutyNames.get(pos));
-
-                        // 선택항목에 대한 Adapter
-                        selectAdapter = new SelectAdapter(selectedDutyNames,MainActivity.this);
-                        rv_selectedDuty.setAdapter(selectAdapter);
-                        selectAdapter.notifyDataSetChanged();
-
 
                     }
-                });
 
+                });
                 adapter.notifyDataSetChanged();
+
             }
 
             @Override
-            public void onFailure(Call<List<DutyName>> call, Throwable t) {
+            public void onFailure(Call<ArrayList<DutyName>> call, Throwable t) {
                 Toast.makeText(MainActivity.this, "Error\n"+t.toString(), Toast.LENGTH_LONG).show();
             }
         });
     }
 
+//    private void CreateListOfData() {
+//        dutyNames = new ArrayList<>();
+//        for (int i = 0; i < dutyNames.size(); i++){
+//           DutyName dutyName = new DutyName();
+//            dutyName.setDuty_name(adapter.getAll().get(i).getDuty_name());
+//            if( i == 0) {
+//                dutyName.setChecked(true);
+//            }
+//            dutyNames.add(dutyName);
+//        }
+//        adapter.setDutyNames(dutyNames);
+//    }
+
+    // 옵션 메뉴 만들기
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -118,6 +163,7 @@ public class MainActivity extends AppCompatActivity {
         searchView.setSearchableInfo(
                 searchManager.getSearchableInfo(getComponentName()));
         searchView.setIconifiedByDefault(false);
+        //
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
